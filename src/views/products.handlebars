@@ -1,0 +1,70 @@
+<h1>Lista de Productos</h1>
+
+<!-- Formulario de filtrado -->
+<form id="filterForm">
+    <input type="text" name="name" placeholder="Buscar por nombre">
+    <input type="text" name="category" placeholder="Buscar por categoría">
+    <button type="submit">Buscar</button>
+</form>
+
+<!-- Lista de productos -->
+<ul id="productList">
+    {{#each products}}
+    <li>
+        {{this.name}} - ${{this.price}} ({{this.category}})
+        <a href="/products/{{this._id}}"><button>Ver Detalles</button></a> <!-- Botón para ver los detalles -->
+    </li>
+    {{/each}}
+</ul>
+
+<!-- Controles de paginación -->
+<div id="pagination">
+    <button id="prevPage" disabled>Anterior</button>
+    <span id="pageInfo"></span>
+    <button id="nextPage" disabled>Siguiente</button>
+</div>
+
+<script>
+    let currentPage = 1;
+    let totalPages = 1;
+    const limit = 10; // Cambia este valor si quieres más productos por página
+
+    async function fetchProducts(page = 1) {
+        const params = new URLSearchParams(new FormData(document.getElementById("filterForm")));
+        params.append("page", page);
+        params.append("limit", limit);
+
+        try {
+            const response = await fetch(`/api/products?${params}`);
+            const { payload: products, totalPages: serverTotalPages, currentPage: serverPage } = await response.json();
+
+            // Actualizar la lista de productos
+            const productList = document.getElementById("productList");
+            productList.innerHTML = products.map(p => `<li>${p.name} - $${p.price} (${p.category}) <a href="/products/${p._id}"><button>Ver Detalles</button></a></li>`).join("");
+
+            // Actualizar la paginación
+            currentPage = serverPage;
+            totalPages = serverTotalPages;
+            document.getElementById("pageInfo").innerText = `Página ${currentPage} de ${totalPages}`;
+            
+            // Habilitar o deshabilitar botones según la página actual
+            document.getElementById("prevPage").disabled = currentPage <= 1;
+            document.getElementById("nextPage").disabled = currentPage >= totalPages;
+        } catch (error) {
+            console.error("Error al obtener productos:", error);
+        }
+    }
+
+    // Evento para filtrar productos
+    document.getElementById("filterForm").addEventListener("submit", function(event) {
+        event.preventDefault();
+        fetchProducts(1); // Reiniciar a la página 1 al filtrar
+    });
+
+    // Eventos de paginación
+    document.getElementById("prevPage").addEventListener("click", () => fetchProducts(currentPage - 1));
+    document.getElementById("nextPage").addEventListener("click", () => fetchProducts(currentPage + 1));
+
+    // Cargar productos al inicio
+    fetchProducts();
+</script>

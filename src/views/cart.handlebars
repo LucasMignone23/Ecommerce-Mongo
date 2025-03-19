@@ -1,0 +1,55 @@
+<h1>Carrito</h1>
+{{#if cart}}
+  <ul id="cart-list">
+    {{#each cart.products}}
+      <li id="product-{{this.product._id}}">
+        {{this.product.name}} - ${{this.product.price}} - Cantidad: {{this.quantity}}
+        <button onclick="deleteProduct('{{../cart._id}}', '{{this.product._id}}')">Eliminar</button>
+      </li>
+    {{/each}}
+  </ul>
+
+  <form id="emptyCartForm" onsubmit="event.preventDefault(); emptyCart('{{cart._id}}')">
+    <button type="submit">Vaciar Carrito</button>
+  </form>
+{{else}}
+  <p>El carrito está vacío.</p>
+{{/if}}
+
+<script>
+  function deleteProduct(cartId, productId) {
+    fetch(`/api/carts/${cartId}/product/${productId}`, {
+      method: 'DELETE',
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.status === "success") {
+        // Actualiza la vista eliminando el producto del carrito
+        document.getElementById(`product-${productId}`).remove();
+      } else {
+        alert('Error al eliminar el producto');
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+    });
+  }
+
+  function emptyCart(cartId) {
+    fetch(`/api/carts/${cartId}`, {
+      method: 'DELETE',
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.status === "success") {
+        // Actualiza la vista mostrando que el carrito está vacío
+        document.getElementById("cart-list").innerHTML = "<p>El carrito está vacío.</p>";
+      } else {
+        alert('Error al vaciar el carrito');
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+    });
+  }
+</script>

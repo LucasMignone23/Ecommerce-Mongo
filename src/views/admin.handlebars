@@ -1,0 +1,60 @@
+<h1>Administración de Productos</h1>
+
+<!-- Formulario para agregar producto -->
+<form id="addProductForm">
+    <input type="text" name="name" placeholder="Nombre del producto" required>
+    <input type="number" name="price" placeholder="Precio" required>
+    <input type="text" name="category" placeholder="Categoría" required>
+    <button type="submit">Agregar Producto</button>
+</form>
+
+<hr>
+
+<!-- Listado de productos con opciones de editar/eliminar -->
+<ul>
+    {{#each products}}
+        <li>
+            {{this.name}} - ${{this.price}} ({{this.category}})
+            <button onclick="editProduct('{{this._id}}', '{{this.name}}', '{{this.price}}', '{{this.category}}')">Editar</button>
+            <button onclick="deleteProduct('{{this._id}}')">Eliminar</button>
+        </li>
+    {{/each}}
+</ul>
+
+<!-- Script para manejar las acciones -->
+<script>
+    document.getElementById("addProductForm").addEventListener("submit", async function(event) {
+        event.preventDefault();
+        const formData = new FormData(event.target);
+        const data = Object.fromEntries(formData.entries());
+
+        const response = await fetch("/api/products", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data)
+        });
+
+        if (response.ok) location.reload();
+    });
+
+    async function deleteProduct(id) {
+        if (confirm("¿Seguro que quieres eliminar este producto?")) {
+            await fetch(`/api/products/${id}`, { method: "DELETE" });
+            location.reload();
+        }
+    }
+
+    function editProduct(id, name, price, category) {
+        const newName = prompt("Nuevo nombre:", name);
+        const newPrice = prompt("Nuevo precio:", price);
+        const newCategory = prompt("Nueva categoría:", category);
+
+        if (newName && newPrice && newCategory) {
+            fetch(`/api/products/${id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name: newName, price: newPrice, category: newCategory })
+            }).then(() => location.reload());
+        }
+    }
+</script>
